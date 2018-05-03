@@ -1,0 +1,322 @@
+<html>
+
+<head>
+    <title>VSM Builds</title>
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/bootstrap.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
+
+</head>
+
+<body>
+
+
+<nav style="z-index:50;position:fixed;width:100%;overflow:hidden;top:0px"
+     class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <a class="navbar-brand" style="font-size: 25px; color: white;cursor:pointer;" onclick="window.location.reload()">VSM Builds </a>
+
+
+   
+
+
+</nav>
+
+
+<div style="text-align:center">
+    <h1 style="text-transform: uppercase;" id="pathname2"><?php
+
+        $basepath = getcwd();
+        $path = basename(__DIR__);
+        //        echo $path;
+
+        ?>
+
+    </h1>
+
+
+</div>
+
+
+<?php
+$dir;
+
+$dir = '/opt/builds/';
+
+
+$files2 = scandir($dir, 1);
+
+
+?>
+
+<div id="table1" style="margin-top:80px">
+    <table id="mytable" class="table table-hover" border="1" style="width:100%">
+        <?php
+        global $files;
+        //    echo $dir;
+        $files1 = scandir($dir);
+		arsort($files1);
+        for ($i = 0; $i < count($files1); $i++) {
+
+            if ($files1[$i] !== '.' && $files1[$i] !== '..') {
+                if (is_dir('/opt/builds/' . $files1[$i])) {
+                    $icon = "<img src='images/folder.png' style='width:45px'/>";
+                } else {
+                    $icon = "<img src='images/icon.png' style='width:45px'/>";
+                }
+
+
+                $files = $files1[$i];
+
+                ?>
+
+                <tr class='table-secondary' onclick="fileclick('<?php
+
+                $dir = '/opt/builds/' . $files;
+				$stage='/opt/release/stage-release/';
+				$develop='/opt/release/dev-release/';
+				$release='/opt/release/prod-release/';
+
+                echo $dir ?>','<?php echo $files ?>' )">
+
+                    <td>
+<table>
+<tr>
+<td>
+                        <?php
+                        $size = filesize($dir);
+                        echo $icon . "  ";
+?>
+</td>
+<td width="70%">
+<?php
+                        if (strpos($files1[$i], '--') !== false) {
+                        
+                        $splitd = explode('--',$files1[$i]);
+                        
+                        for($c=0;$c < count($splitd);$c++) {
+                         if(strpos($splitd[$c], ':') !== false){
+                            echo "<span style='color:darkgray;font-size:12px'>".substr_replace($splitd[$c] ,"",-8)."   ".substr($splitd[$c], -8)."</span><br/>";   
+                         }else{
+                         if ($c < 1){
+                         echo $splitd[$c]."<br/>";
+                         }else{
+                          echo "<span style='color:gray;font-size:14px'>".$splitd[$c]."</span><br/>";
+                          }
+}
+                        }  
+
+}else{
+echo $files1[$i];
+}
+
+ ?>
+</td>
+<td >  <button type="button" class="btn btn-default" onclick="copyContents('<?php echo $dir;?>','<?php echo $develop ?>')"; >
+      <span class="glyphicon glyphicon-cloud-upload"></span> Development
+    </button></td>
+<td >  <button type="submit" class="btn btn-default" onclick="copyContents('<?php echo $dir;?>','<?php echo $stage ?>')";>
+      <span class="glyphicon glyphicon-cloud-upload"></span> Stage
+    </button></td>
+	
+	<td>  <button type="button" class="btn btn-default" onclick="copyContents('<?php echo $dir;?>','<?php echo $release ?>')";>
+      <span class="glyphicon glyphicon-cloud-upload"></span> Release
+    </button></td>
+</tr>
+</table>
+
+                    </td>
+                    <!--                    <td>-->
+                    <!--                        Filesize:--><?php //echo $size ?>
+                    <!--                    </td>-->
+                </tr>
+                <?php
+            }
+        }
+        ?>
+
+    </table>
+</div>
+
+<script>
+
+
+    // $(document).ready( function () {
+    //     $('#mytable').DataTable();
+    // } );
+
+
+    function fileclick(path, filename) {
+
+        // alert(JSON.stringify(path));
+        // $("#mytable").remove();
+        dynamictable2(path, filename);
+
+
+    }
+
+
+    function dynamictable2(path, filename) {
+
+        $.ajax({
+            type: 'POST',
+            url: 'getdata.php',
+            dataType: "json",
+            data: {path: path, filename: filename},
+            success: function (data) {
+
+
+                var dynamicHtml = "";
+                var base = data[data.length - 1].path;
+                var dirpath = "/opt/builds/";
+                var dirpath2 = "/opt/builds/"
+
+		var stage='/opt/release/stage-release/';
+		var develop='/opt/release/dev-release/';
+		var release='/opt/release/prod-release/';
+
+                console.log(base)
+
+                dynamicHtml += "<table id='mytable' class='table table-hover' border='1' style='width:100%'>";
+                for (var i = 0; i < data.length - 1; i++) {
+                    var newpath = data[data.length - 1].path + '/' + data[i].name;
+
+                    if (data[i].name !== '.' && !(data[i].name === '..' && (base === dirpath || base === dirpath2))) {
+
+                        dynamicHtml += "<tr class='table-secondary' onclick='fileclick(\"" + newpath.toString() + "\" )'><td><table><tr><td>";
+                        dynamicHtml += data[i].icon +"</td><td>";
+                 
+		      
+
+
+
+console.log(data[i].name);
+if (((data[i].name).toString()).includes('--')) {
+       console.log("we are here")
+        var splitd = Array(); 
+        splitd = data[i].name.split('--');
+       console.log(splitd)
+          for (let j = 0; j < splitd.length; j++) {
+            if ((splitd[j]).includes(':')) {
+                dynamicHtml += "  " +"<span style='color:darkgray;font-size:12px;'>" + splitd[j].slice(0, -8) + "   " + splitd[j].substr(splitd[j].length - 8) + "</span>";
+            } else {
+                if(j < 1)
+                dynamicHtml += "  " + splitd[j] + "<br/>";
+                else
+                dynamicHtml += "  " +"<span style='color:gray;font-size:14px'>"+ splitd[j] + "</span><br/>";
+  
+            }
+
+        }
+        
+15cf2a6
+
+    } else {
+
+        dynamicHtml += "  " + data[i].name;
+
+    }
+
+
+
+                        dynamicHtml += "</table></td></tr>";
+                    }
+                }
+
+                dynamicHtml += "</table>";
+
+                $("#table1").html(dynamicHtml);
+
+
+                var pathd = ""
+
+                var seperateHome = base.split(dirpath)[1]
+
+                var pathParts;
+
+                try {
+
+                    pathParts = seperateHome.split("/");
+
+                } catch (e) {
+
+                    pathParts = "";
+
+                }
+
+                pathd += "<a style='color: white;cursor:pointer;' onclick='redirect(\"/\")'>Home</a>";
+
+                var realPath = dirpath;
+
+                for (var i = 0; i < pathParts.length; i++) {
+
+                    if (pathParts[i] === '..') {
+                        i++;
+
+                    } else {
+                        realPath += pathParts[i] + "/";
+
+                        pathd += "<a style='color: white;cursor:pointer;' onclick='redirect(\"" + realPath + "\")'> -" + pathParts[i] + "</a>"
+                        console.log(realPath);
+                    }
+
+                }
+
+                // pathd += "<a style='color: white;cursor:pointer;' onclick='redirect(\""+seperateHome+"\")'><br/>"+seperateHome+"</a>"
+
+                // $("#breadcrumbshref").html(pathd)
+
+            }
+
+        })
+
+    }
+
+
+    function redirect(path) {
+        var paths = path
+        if (path === '/') {
+            var base = '/opt/builds/';
+
+            dynamictable2(base);
+            var pathd = "";
+            pathd += "<a style='color: white;cursor:pointer;' onclick='redirect(\"/\")'>Home</a>";
+            $("#breadcrumbshref").html(pathd)
+        } else {
+            dynamictable2(path);
+
+        }
+
+
+    }
+	function copyContents(src,dest)
+	{ 
+		var  destination=dest;
+		var  source=src;
+		$.ajax({
+		type: "POST",
+		url:  "copyContents.php",
+		data: {dest: destination, src: source},
+		cache: false,
+		success: function(result){
+			if(result!=0){
+				// On success redirect.
+			alert(result);
+			window.location.replace('index.php');
+			}
+			else
+				alert('Copy Failed');
+		}
+		});
+
+	}
+
+</script>
+<!--<nav class="navbar navbar-expand-lg navbar-dark bg-dark" style="position: fixed;bottom:0px;right:0px">-->
+<!--    <a class="navbar-brand" href="#" style="text-align: center">NRM@2018</a>-->
+
+
+</nav>
+</body>
+</html>
